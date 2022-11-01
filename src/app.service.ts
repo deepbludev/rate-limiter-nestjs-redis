@@ -1,6 +1,5 @@
 import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common'
 import { Cache } from 'cache-manager'
-import { generateKeyPairSync } from 'crypto'
 
 @Injectable()
 export class AppService {
