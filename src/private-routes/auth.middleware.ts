@@ -17,7 +17,9 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (!isValid) {
       const status = HttpStatus.UNAUTHORIZED
-      const error = 'The API token is missing or invalid ' + apiToken
+      const error = `API token ${
+        apiToken ? apiToken + ' not found' : 'missing'
+      }`
       throw new HttpException({ status, error }, status)
     }
 

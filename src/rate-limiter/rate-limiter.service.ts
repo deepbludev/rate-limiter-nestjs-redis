@@ -15,9 +15,12 @@ export class RateLimiterService {
   async checkUsage(
     token: string,
     opts?: { limit?: number; weight?: number }
-  ): Promise<string> {
+  ): Promise<boolean> {
+    // TODO: get from env
+    // TODO: get key with lowest ttl
     const { limit = 10, weight = 1 } = opts || {}
     const ttl = 20
+
     const id = uuid()
     const key = `api:${token}:${id}`
     const keys = await this.cacheManager.store.keys(`api:${token}:*`)
@@ -38,10 +41,10 @@ export class RateLimiterService {
 
     if (totalWeight >= limit) {
       console.log({
-        ip: token,
+        key,
         requests: keyvalues.length,
         totalWeight,
-        keyvalues,
+        // keyvalues,
         untilReset: keyvalues[0] ? keyvalues[0][2] : 0,
       })
       throw new HttpException(
@@ -55,6 +58,6 @@ export class RateLimiterService {
 
     await this.cacheManager.set(key, weight, { ttl })
 
-    return 'Hello World!'
+    return true
   }
 }
