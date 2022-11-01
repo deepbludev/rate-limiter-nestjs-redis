@@ -1,3 +1,5 @@
+import { v4 as uuid } from 'uuid'
+import { Cache } from 'cache-manager'
 import {
   CACHE_MANAGER,
   HttpException,
@@ -5,8 +7,6 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common'
-import { Cache } from 'cache-manager'
-import { v4 as uuid } from 'uuid'
 
 @Injectable()
 export class RateLimiterService {
@@ -14,16 +14,14 @@ export class RateLimiterService {
 
   async checkUsage(
     token: string,
-    opts?: { limit?: number; weight?: number }
+    opts: { limit: number; weight?: number }
   ): Promise<boolean> {
-    // TODO: get from env
-    // TODO: get key with lowest ttl
-    const { limit = 10, weight = 1 } = opts || {}
-    const ttl = 20
+    const ttl = 60 * 60 // 1 hour
 
-    const id = uuid()
-    const key = `api:${token}:${id}`
-    const keys = await this.cacheManager.store.keys(`api:${token}:*`)
+    const key = `rate-limit:${token}:${uuid()}`
+    const keys = await this.cacheManager.store.keys(`rate-limit:${token}:*`)
+
+    // TODO: get key with lowest ttl
     const keyvalues = await Promise.all(
       keys.map(key =>
         Promise.all([
@@ -34,8 +32,9 @@ export class RateLimiterService {
       )
     )
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const totalWeight = keyvalues.reduce((acc, [key, value]) => {
+    const { limit, weight = 1 } = opts
+
+    const totalWeight = keyvalues.reduce((acc, [, value]) => {
       return acc + value
     }, 0)
 
