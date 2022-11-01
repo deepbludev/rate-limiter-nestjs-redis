@@ -22,8 +22,6 @@ describe('AppController (e2e)', () => {
     apiKeyLimit = configService.get<number>('rateLimit.apiKey')
     ipLimit = configService.get<number>('rateLimit.ip')
 
-    console.log({ apiKeyLimit, ipLimit })
-
     const apiKeyRepo = await module.get<ApiKeyRepository>(ApiKeyRepository)
     validApiKey = (await apiKeyRepo.all()).pop()
 
@@ -39,6 +37,10 @@ describe('AppController (e2e)', () => {
   })
 
   describe('public routes', () => {
+    beforeEach(async () => {
+      await app.get(CACHE_MANAGER).reset()
+    })
+
     const validRequest = () => request(app.getHttpServer()).get('/public/a')
 
     describe('rate limiting', () => {
@@ -46,14 +48,17 @@ describe('AppController (e2e)', () => {
         let res = await validRequest()
         expect(res.status).toEqual(HttpStatus.OK)
 
-        for (let i = 0; i <= ipLimit + 1; i++) await validRequest()
-        res = await validRequest()
+        for (let i = 0; i <= ipLimit; i++) res = await validRequest()
         expect(res.status).toEqual(HttpStatus.TOO_MANY_REQUESTS)
       })
     })
   })
 
   describe('private routes', () => {
+    beforeEach(async () => {
+      await app.get(CACHE_MANAGER).reset()
+    })
+
     const validRequest = () =>
       request(app.getHttpServer())
         .get('/private/a')
@@ -79,12 +84,15 @@ describe('AppController (e2e)', () => {
     })
 
     describe('rate limiting', () => {
+      beforeEach(async () => {
+        await app.get(CACHE_MANAGER).reset()
+      })
+
       it('should return 429 if too many requests', async () => {
         let res = await validRequest()
         expect(res.status).toEqual(HttpStatus.OK)
 
-        for (let i = 0; i <= apiKeyLimit + 1; i++) await validRequest()
-        res = await validRequest()
+        for (let i = 0; i <= apiKeyLimit; i++) res = await validRequest()
         expect(res.status).toEqual(HttpStatus.TOO_MANY_REQUESTS)
       })
     })

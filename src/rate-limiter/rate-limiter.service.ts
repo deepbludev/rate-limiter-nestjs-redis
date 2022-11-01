@@ -1,62 +1,41 @@
 import { v4 as uuid } from 'uuid'
 import { Cache } from 'cache-manager'
-import {
-  CACHE_MANAGER,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-} from '@nestjs/common'
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common'
 
 @Injectable()
 export class RateLimiterService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async checkUsage(
-    token: string,
-    opts: { limit: number; weight?: number }
-  ): Promise<boolean> {
-    const ttl = 60 * 60 // 1 hour
+  async checkUsage(token: string, opts: { limit: number; weight?: number }) {
+    const { limit, weight = 1 } = opts
 
     const key = `rate-limit:${token}:${uuid()}`
     const keys = await this.cacheManager.store.keys(`rate-limit:${token}:*`)
 
-    // TODO: get key with lowest ttl
-    const keyvalues = await Promise.all(
-      keys.map(key =>
-        Promise.all([
-          key,
-          this.cacheManager.get(key),
-          this.cacheManager.store.ttl(key),
-        ])
-      )
+    const values = await Promise.all<{ weight: number }>(
+      keys.map(k => this.cacheManager.get(k))
     )
 
-    const { limit, weight = 1 } = opts
+    const ttls = await Promise.all(
+      keys.map(k => this.cacheManager.store.ttl(k))
+    )
+    const requests = keys.length
+    const untilReset = Math.max(...ttls) || 0
 
-    const totalWeight = keyvalues.reduce((acc, [, value]) => {
-      return acc + value
-    }, 0)
+    const totalWeight = values.reduce((acc, val) => acc + val.weight, 0)
+    const isOverLimit = totalWeight > limit
 
-    if (totalWeight >= limit) {
-      console.log({
-        key,
-        requests: keyvalues.length,
-        totalWeight,
-        // keyvalues,
-        untilReset: keyvalues[0] ? keyvalues[0][2] : 0,
-      })
-      throw new HttpException(
-        {
-          status: HttpStatus.TOO_MANY_REQUESTS,
-          error: 'You have exceeded the limit of requests per hour: ' + limit,
-        },
-        HttpStatus.TOO_MANY_REQUESTS
-      )
+    const oneHour = 60 * 60 // 1 hour
+    if (!isOverLimit) await this.cacheManager.set(key, weight, { ttl: oneHour })
+
+    const result = {
+      key,
+      isOverLimit,
+      requests,
+      totalWeight,
+      untilReset,
     }
 
-    await this.cacheManager.set(key, weight, { ttl })
-
-    return true
+    return result
   }
 }
