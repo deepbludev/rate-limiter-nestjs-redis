@@ -12,12 +12,12 @@ import { v4 as uuid } from 'uuid'
 export class RateLimiterService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async getHello(
+  async checkUsage(
     token: string,
     opts?: { limit?: number; weight?: number }
   ): Promise<string> {
-    const { limit = 200, weight = 1 } = opts || {}
-    const ttl = 60 * 60
+    const { limit = 10, weight = 1 } = opts || {}
+    const ttl = 20
     const id = uuid()
     const key = `api:${token}:${id}`
     const keys = await this.cacheManager.store.keys(`api:${token}:*`)
@@ -36,14 +36,14 @@ export class RateLimiterService {
       return acc + value
     }, 0)
 
-    console.log({
-      ip: token,
-      requests: keyvalues.length,
-      totalWeight,
-      keyvalues,
-    })
-
-    if (totalWeight >= limit)
+    if (totalWeight >= limit) {
+      console.log({
+        ip: token,
+        requests: keyvalues.length,
+        totalWeight,
+        keyvalues,
+        untilReset: keyvalues[0] ? keyvalues[0][2] : 0,
+      })
       throw new HttpException(
         {
           status: HttpStatus.TOO_MANY_REQUESTS,
@@ -51,6 +51,7 @@ export class RateLimiterService {
         },
         HttpStatus.TOO_MANY_REQUESTS
       )
+    }
 
     await this.cacheManager.set(key, weight, { ttl })
 
