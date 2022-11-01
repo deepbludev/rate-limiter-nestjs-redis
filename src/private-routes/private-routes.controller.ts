@@ -10,6 +10,7 @@ export class PrivateRoutesController {
       message: 'Private Route A',
     }
   }
+
   @Get(privateRoutes.b.path)
   async b(): Promise<{ status: number; message: string }> {
     return {
@@ -17,6 +18,7 @@ export class PrivateRoutesController {
       message: 'Private Route B',
     }
   }
+
   @Get(privateRoutes.c.path)
   async c(): Promise<{ status: number; message: string }> {
     return {

@@ -9,7 +9,6 @@ export class RateLimiterService {
   async checkLimits(token: string, opts: { limit: number; weight?: number }) {
     const { limit, weight = 1 } = opts
 
-    const key = `rate-limit:${token}:${uuid()}`
     const keys = await this.cacheManager.store.keys(`rate-limit:${token}:*`)
 
     const values = await Promise.all<{ weight: number }>(
@@ -19,23 +18,19 @@ export class RateLimiterService {
     const ttls = await Promise.all(
       keys.map(k => this.cacheManager.store.ttl(k))
     )
-    const requests = keys.length
-    const untilReset = Math.max(...ttls) || 0
+    const secondsUntilLiftingLimit = Math.max(...ttls) || 0
 
     const totalWeight = values.reduce((acc, val) => acc + val.weight, 0)
     const isOverLimit = totalWeight > limit
 
-    const oneHour = 60 * 60 // 1 hour
-    if (!isOverLimit) await this.cacheManager.set(key, weight, { ttl: oneHour })
+    const key = `rate-limit:${token}:${uuid()}`
+    if (!isOverLimit) await this.cacheManager.set(key, weight, { ttl: 60 * 60 }) // 1 hour
 
-    const result = {
-      key,
+    return {
+      token,
       isOverLimit,
-      requests,
       totalWeight,
-      untilReset,
+      secondsUntilLiftingLimit,
     }
-
-    return result
   }
 }
