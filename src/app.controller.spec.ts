@@ -1,7 +1,5 @@
-import { faker } from '@faker-js/faker'
 import { Test, TestingModule } from '@nestjs/testing'
 import { AppController } from './app.controller'
-import { RateLimiterModule } from './rate-limiter/rate-limiter.module'
 
 describe('AppController', () => {
   let app: TestingModule
@@ -9,22 +7,15 @@ describe('AppController', () => {
 
   beforeEach(async () => {
     app = await Test.createTestingModule({
-      imports: [RateLimiterModule],
       controllers: [AppController],
     }).compile()
 
     appController = app.get<AppController>(AppController)
   })
 
-  afterAll(async () => {
-    await app.close()
-  })
-
   describe('root', () => {
-    it('should return "Hello World!"', async () => {
-      expect(await appController.status(faker.internet.ip())).toBe(
-        'Hello World!'
-      )
+    it('should return "API OK"', async () => {
+      expect(appController.status()).toBe('API OK')
     })
   })
 })
