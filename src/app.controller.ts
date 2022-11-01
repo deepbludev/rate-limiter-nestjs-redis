@@ -1,10 +1,10 @@
 import { Controller, Get, Req } from '@nestjs/common'
 import { Request } from 'express'
-import { AppService } from './app.service'
+import { RateLimiterService } from './rate-limiter/rate-limiter.service'
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: RateLimiterService) {}
 
   @Get()
   async getHello(@Req() request: Request): Promise<string> {

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { AppController } from './app.controller'
-import { AppService } from './app.service'
-import { cacheModule } from './cache/cache-module'
+import { RateLimiterModule } from './rate-limiter/rate-limiter.module'
 
 describe('AppController', () => {
   let app: TestingModule
@@ -9,9 +8,8 @@ describe('AppController', () => {
 
   beforeEach(async () => {
     app = await Test.createTestingModule({
-      imports: [cacheModule],
+      imports: [RateLimiterModule],
       controllers: [AppController],
-      providers: [AppService],
     }).compile()
 
     appController = app.get<AppController>(AppController)
