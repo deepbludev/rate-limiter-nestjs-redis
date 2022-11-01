@@ -6,6 +6,7 @@ import {
   Injectable,
 } from '@nestjs/common'
 import { Cache } from 'cache-manager'
+import { v4 as uuid } from 'uuid'
 
 @Injectable()
 export class RateLimiterService {
@@ -15,7 +16,7 @@ export class RateLimiterService {
     const limit = 5
     const ttl = 10 // 10 secs
     const timestamp = Date.now()
-    const id = Math.random().toString(36).slice(2)
+    const id = uuid()
     const key = `api:${token}:${id}`
     const keys = await this.cacheManager.store.keys(`api:${token}:*`)
     const keyvalues = await Promise.all(
