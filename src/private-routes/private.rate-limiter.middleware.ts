@@ -7,8 +7,10 @@ export class PrivateRateLimiterMiddleware implements NestMiddleware {
   constructor(private readonly rateLimiterService: RateLimiterService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const apiToken = req.headers['api-token']
-    await this.rateLimiterService.checkUsage(apiToken as string, { weight: 2 })
+    await this.rateLimiterService.checkUsage(
+      req.headers['api-token'] as string,
+      { weight: 2 }
+    )
     next()
   }
 }
