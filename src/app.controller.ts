@@ -7,6 +7,6 @@ export class AppController {
 
   @Get()
   async status(@Ip() ip: string): Promise<string> {
-    return await this.appService.getHello(ip)
+    return await this.appService.getHello(ip, { weight: 25 })
   }
 }

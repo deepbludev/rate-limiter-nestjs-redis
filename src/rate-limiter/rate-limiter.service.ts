@@ -12,10 +12,12 @@ import { v4 as uuid } from 'uuid'
 export class RateLimiterService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async getHello(token: string): Promise<string> {
-    const limit = 5
-    const ttl = 10 // 10 secs
-    const timestamp = Date.now()
+  async getHello(
+    token: string,
+    opts?: { limit?: number; weight?: number }
+  ): Promise<string> {
+    const { limit = 200, weight = 1 } = opts || {}
+    const ttl = 60 * 60
     const id = uuid()
     const key = `api:${token}:${id}`
     const keys = await this.cacheManager.store.keys(`api:${token}:*`)
@@ -29,7 +31,19 @@ export class RateLimiterService {
       )
     )
 
-    if (keyvalues.length >= limit)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const totalWeight = keyvalues.reduce((acc, [key, value]) => {
+      return acc + value
+    }, 0)
+
+    console.log({
+      ip: token,
+      requests: keyvalues.length,
+      totalWeight,
+      keyvalues,
+    })
+
+    if (totalWeight >= limit)
       throw new HttpException(
         {
           status: HttpStatus.TOO_MANY_REQUESTS,
@@ -38,9 +52,7 @@ export class RateLimiterService {
         HttpStatus.TOO_MANY_REQUESTS
       )
 
-    console.log({ ip: token, requests: keyvalues.length, keyvalues })
-
-    await this.cacheManager.set(key, timestamp, { ttl })
+    await this.cacheManager.set(key, weight, { ttl })
 
     return 'Hello World!'
   }
