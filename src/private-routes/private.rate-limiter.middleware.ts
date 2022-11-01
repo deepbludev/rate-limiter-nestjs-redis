@@ -14,14 +14,13 @@ export class PrivateRateLimiterMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     const token = req.headers['x-api-key']?.toString()
+    const limit = this.configService.get<number>('rateLimit.apiKey')
+    const weight = privateRoutes[req.url.slice(1)].rateLimit
 
     const { isOverLimit, untilReset } =
-      await this.rateLimiterService.checkUsage(token, {
-        limit: this.configService.get<number>('rateLimit.apiKey'),
-        weight: privateRoutes[req.url.slice(1)].rateLimit,
-      })
+      await this.rateLimiterService.checkLimits(token, { limit, weight })
 
-    if (isOverLimit) throw new RateLimitExceededError(untilReset)
+    if (isOverLimit) throw new RateLimitExceededError(limit, untilReset)
     next()
   }
 }

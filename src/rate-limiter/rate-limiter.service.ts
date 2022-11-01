@@ -6,7 +6,7 @@ import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common'
 export class RateLimiterService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async checkUsage(token: string, opts: { limit: number; weight?: number }) {
+  async checkLimits(token: string, opts: { limit: number; weight?: number }) {
     const { limit, weight = 1 } = opts
 
     const key = `rate-limit:${token}:${uuid()}`
