@@ -22,6 +22,8 @@ describe('AppController (e2e)', () => {
     apiKeyLimit = configService.get<number>('rateLimit.apiKey')
     ipLimit = configService.get<number>('rateLimit.ip')
 
+    console.log({ apiKeyLimit, ipLimit })
+
     const apiKeyRepo = await module.get<ApiKeyRepository>(ApiKeyRepository)
     validApiKey = (await apiKeyRepo.all()).pop()
 
