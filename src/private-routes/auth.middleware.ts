@@ -12,14 +12,12 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly authService: AuthService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const apiToken = req.headers['api-token']?.toString()
-    const isValid = await this.authService.validate(apiToken)
+    const token = req.headers['x-api-key']?.toString()
+    const isValid = await this.authService.validate(token)
 
     if (!isValid) {
       const status = HttpStatus.UNAUTHORIZED
-      const error = `API token ${
-        apiToken ? apiToken + ' not found' : 'missing'
-      }`
+      const error = `API token ${token ? token + ' not found' : 'missing'}`
       throw new HttpException({ status, error }, status)
     }
 

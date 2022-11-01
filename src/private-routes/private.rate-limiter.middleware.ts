@@ -8,7 +8,8 @@ export class PrivateRateLimiterMiddleware implements NestMiddleware {
   constructor(private readonly rateLimiterService: RateLimiterService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const token = req.headers['api-token']?.toString()
+    const token = req.headers['x-api-key']?.toString()
+    console.log({ token })
     const path = req.url.slice(1)
     const { weight } = privateRoutes[path].rateLimit
 
