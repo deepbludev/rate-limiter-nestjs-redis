@@ -28,13 +28,11 @@ export class RateLimiterService {
         ttl: 60 * 60, // 1 hour
       })
 
-    const result = {
+    return {
       token,
       isOverLimit,
       totalWeight,
       secondsUntilLiftingLimit,
     }
-
-    return result
   }
 }
