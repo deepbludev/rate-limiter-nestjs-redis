@@ -22,7 +22,7 @@ export class PublicRateLimiterMiddleware implements NestMiddleware {
       weight,
     })
 
-    console.log(result)
+    console.log(result) // left here for illustration purposes
 
     if (result.isOverLimit)
       throw new RateLimitExceededError(limit, result.secondsUntilLiftingLimit)

@@ -8,9 +8,9 @@ The rate limit is based on the user IP address for public routes and a API token
 
 There are  2 sets of routes:
 
-- Public routes: `/public/a`, `/public/b`, `/public/c`. These routes do not require authentication and measure rate limit per ip address.
+- Public routes: `GET /public/a, /public/b, /public/c`. These routes do not require authentication and measure rate limit per ip address.
   
-- Private routes: `/private/a`, `/private/b`, `/private/c`. These routes require authentication via API Key in request header and measure rate limit per API Key.
+- Private routes: `GET /private/a,  /private/b, /private/c`. These routes require authentication via API Key in request header and measure rate limit per API Key.
 
 Each route has a different weight to calculate the rate limit. These weights are defined in the `public.routes.ts` and `private.routes.ts` files inside each module.
 
@@ -20,28 +20,43 @@ Weights are stored in a Redis key with the following format: `rate-limit:{token}
 
 There is an API Key authentication guard for the private routes that checks if the API token is valid. The API Key should be passed in the `x-api-key` header.
 
-The app uses a mocked database to check if the API token is among the registered ones. Any of the following tokens is valid in the mocked database:
 
+
+## Installation
+After cloning, install the dependencies:
+```bash
+# install dependencies
+$ npm install
 ```
+
+The app uses a Redis cache to store the rate limit data. There is a docker-compose file that starts a Redis container. To start the Redis container, run the following command:
+```bash
+# start redis container
+$ docker-compose up -d
+```
+
+There is a simple e2e test that checks if the rate limit is working. For illustration purposes, the rate limiter result will be console logged on every request.
+
+To run the test, run the following command:
+```bash
+# running e2e tests
+$ npm run test:e2e
+```
+
+To test the app manually, run the following command:
+```bash
+# running the app
+$ npm run start
+```
+
+The app uses a mocked database to check if the API token is among the registered ones.
+
+Any of the following tokens is valid in the mocked database. You can use them to run the app and manually test the rate limiter by sending requests to the public and private routes with one of these keys in the `x-api-key` header.
+```bash
   '026a2f78-d68c-4e9e-8c9c-ad53f1c74cec'
   '3dc36e31-0ef7-4fde-9894-1b93ce59e6a3'
   '030743e0-bd92-4baa-801a-282710b5648b'
   '95a80b45-87ab-457f-84e1-e4805e020b1c'
   '974a0506-0d03-40b4-b030-08e30b99130f'
 ```
-
-## Installation
-
-```bash
-# install dependencies
-$ npm install
-
-# initialize redis server
-$ docker-compose up -d
-
-# running e2e tests
-$ npm run test:e2e
-
-# running the app
-$ npm run start
-```
+Keep in mind that the rate limit is set to a default of 100 requests per hour for public routes and 200 requests per hour for private routes. This can make manual testing cumbersome unless you change these parameters in the `.env` file to lower values, such as 5 or 10.

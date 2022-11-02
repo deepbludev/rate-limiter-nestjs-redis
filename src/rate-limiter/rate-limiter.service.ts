@@ -19,9 +19,10 @@ export class RateLimiterService {
       keys.map(k => this.cacheManager.store.ttl(k))
     )
 
-    const secondsUntilLiftingLimit = ttls.length ? Math.min(...ttls) : 0
     const totalWeight = values.reduce((acc, val) => acc + val.weight, 0)
     const isOverLimit = totalWeight > limit
+
+    const secondsUntilLiftingLimit = isOverLimit ? Math.min(...ttls) : 0
 
     if (!isOverLimit)
       await this.cacheManager.set(`rate-limit:${token}:${uuid()}`, weight, {
@@ -30,8 +31,8 @@ export class RateLimiterService {
 
     return {
       token,
-      isOverLimit,
       totalWeight,
+      isOverLimit,
       secondsUntilLiftingLimit,
     }
   }
