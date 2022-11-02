@@ -8,7 +8,7 @@ import { publicRoutes } from './public.routes'
 @Injectable()
 export class PublicRateLimiterMiddleware implements NestMiddleware {
   constructor(
-    private readonly rateLimiterService: RateLimiterService,
+    private readonly rateLimiter: RateLimiterService,
     private configService: ConfigService
   ) {}
 
@@ -17,11 +17,16 @@ export class PublicRateLimiterMiddleware implements NestMiddleware {
     const limit = this.configService.get<number>('rateLimit.ip')
     const weight = publicRoutes[req.url.slice(1)].rateLimit
 
-    const { isOverLimit, secondsUntilLiftingLimit } =
-      await this.rateLimiterService.checkLimits(token, { limit, weight })
+    const result = await this.rateLimiter.check(token, {
+      limit,
+      weight,
+    })
 
-    if (isOverLimit)
-      throw new RateLimitExceededError(limit, secondsUntilLiftingLimit)
+    console.log(result)
+
+    if (result.isOverLimit)
+      throw new RateLimitExceededError(limit, result.secondsUntilLiftingLimit)
+
     next()
   }
 }

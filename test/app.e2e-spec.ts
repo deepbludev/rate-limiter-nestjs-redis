@@ -4,9 +4,11 @@ import { CACHE_MANAGER, HttpStatus, INestApplication } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AppModule } from '../src/app.module'
 import { ApiKeyRepository } from '../src/private-routes/api-key.repository'
+import { Cache } from 'cache-manager'
 
 describe('AppController (e2e)', () => {
   let app: INestApplication
+  let cache: Cache
   let validApiKey: string
   let apiKeyLimit: number
   let ipLimit: number
@@ -25,7 +27,8 @@ describe('AppController (e2e)', () => {
     const apiKeyRepo = await module.get<ApiKeyRepository>(ApiKeyRepository)
     validApiKey = (await apiKeyRepo.all()).pop()
 
-    await app.get(CACHE_MANAGER).reset()
+    cache = await app.get(CACHE_MANAGER)
+    await cache.reset()
     await app.init()
   })
 
@@ -38,7 +41,11 @@ describe('AppController (e2e)', () => {
 
   describe('public routes', () => {
     beforeEach(async () => {
-      await app.get(CACHE_MANAGER).reset()
+      await cache.reset()
+    })
+
+    afterAll(async () => {
+      await cache.reset()
     })
 
     const validRequest = () => request(app.getHttpServer()).get('/public/a')
@@ -57,6 +64,10 @@ describe('AppController (e2e)', () => {
   describe('private routes', () => {
     beforeEach(async () => {
       await app.get(CACHE_MANAGER).reset()
+    })
+
+    afterAll(async () => {
+      await cache.reset()
     })
 
     const validRequest = () =>
